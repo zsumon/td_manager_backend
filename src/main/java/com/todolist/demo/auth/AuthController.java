@@ -12,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,15 +24,18 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final TodoUserDetailsService todoUserDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(TodoUserService todoUserService,
                           AuthenticationManager authenticationManager,
                           JwtUtil jwtUtil,
-                          TodoUserDetailsService todoUserDetailsService) {
+                          TodoUserDetailsService todoUserDetailsService,
+                          PasswordEncoder passwordEncoder) {
         this.todoUserService = todoUserService;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.todoUserDetailsService = todoUserDetailsService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/register")
@@ -39,7 +43,8 @@ public class AuthController {
         TodoUser user;
         if (todoUserService.getUserByUserName(request.getUserName()) != null)
             throw new UserAlreadyExistsException("User already exists with user name " + request.getUserName());
-        user = todoUserService.addUser(new TodoUser(request.getUserName(), request.getFullName(), request.getPassword()));
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        user = todoUserService.addUser(new TodoUser(request.getUserName(), request.getFullName(), encodedPassword));
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
@@ -48,7 +53,6 @@ public class AuthController {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUserName(), authRequest.getPassword()));
         } catch (AuthenticationException exception) {
-            System.out.println(exception);
             throw new WrongCredentialException(exception.getMessage());
         }
         UserDetails userDetails = todoUserDetailsService.loadUserByUsername(authRequest.getUserName());

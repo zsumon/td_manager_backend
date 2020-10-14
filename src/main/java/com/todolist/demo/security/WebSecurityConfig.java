@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -21,19 +21,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final TodoUserDetailsService todoUserDetailsService;
     private final AuthenticationRequestFilter authenticationRequestFilter;
 
-    public WebSecurityConfig(TodoUserDetailsService todoUserDetailsService, AuthenticationRequestFilter authenticationRequestFilter) {
+    public WebSecurityConfig(TodoUserDetailsService todoUserDetailsService,
+                             AuthenticationRequestFilter authenticationRequestFilter) {
         this.todoUserDetailsService = todoUserDetailsService;
         this.authenticationRequestFilter = authenticationRequestFilter;
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(todoUserDetailsService);
+        auth.userDetailsService(todoUserDetailsService).passwordEncoder(new BCryptPasswordEncoder()); // authentication works perfectly... even if we don't set a password encoder, maybe it uses from
+        // the @Bean PasswordEncoder
     }
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
     }
 
     @Override
