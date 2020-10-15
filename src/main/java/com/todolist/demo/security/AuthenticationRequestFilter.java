@@ -51,11 +51,12 @@ public class AuthenticationRequestFilter extends OncePerRequestFilter {
         if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = todoUserDetailsService.loadUserByUsername(userName);
             if (jwtUtil.validateToken(token, userDetails)) {
-                // TODO: 12-Oct-20 re watch the security core videos to better understand the authentication process of spring
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, new ArrayList<>());
                 usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                // we need to set principal in the security context to let others (filters, whole system, know about the authenticated user)
+                // request goes deeper (way to the controller through other filters),  if we don't set principal in the context further actions will be treated as unauthenticated
             }
         }
         filterChain.doFilter(request, response);

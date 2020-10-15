@@ -29,7 +29,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(todoUserDetailsService).passwordEncoder(new BCryptPasswordEncoder()); // authentication works perfectly... even if we don't set a password encoder, maybe it uses from
+        auth.userDetailsService(todoUserDetailsService).passwordEncoder(new BCryptPasswordEncoder());
+        // authentication works perfectly... even if we don't set a password encoder, maybe it uses from
         // the @Bean PasswordEncoder
     }
 
@@ -40,7 +41,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().cors().and()
+        http
+                .csrf()
+                .disable()
+                .cors()
+                .and()
                 .authorizeRequests()
                 .antMatchers("/register", "/authenticate")
                 .permitAll()
