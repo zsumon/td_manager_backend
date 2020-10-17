@@ -2,6 +2,7 @@ package com.todolist.demo.security;
 
 import com.todolist.demo.todouser.TodoUserDetailsService;
 import com.todolist.demo.util.JwtUtil;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +30,7 @@ public class AuthenticationRequestFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String authHeader = request.getHeader(AUTH_HEADER);
         String userName = null;
@@ -40,7 +41,6 @@ public class AuthenticationRequestFilter extends OncePerRequestFilter {
             userName = jwtUtil.getUserNameFromToken(token);
         }
 
-        // TODO: 13-Oct-20 debug using a breakpoint & subsequent requests (from multiple devices maybe..)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
             System.out.println(authentication.getPrincipal());
@@ -49,11 +49,12 @@ public class AuthenticationRequestFilter extends OncePerRequestFilter {
 
         // why do I need to check whether the authentication is null or not ... if each request is stateless then it should be null each time, isn't it??
         if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            //// manually simulating the authentication process
             UserDetails userDetails = todoUserDetailsService.loadUserByUsername(userName);
             if (jwtUtil.validateToken(token, userDetails)) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, new ArrayList<>());
-                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); /*----*/
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
                 // we need to set principal in the security context to let others (filters, whole system, know about the authenticated user)
                 // request goes deeper (way to the controller through other filters),  if we don't set principal in the context further actions will be treated as unauthenticated
